@@ -17,7 +17,7 @@
 exports.up = function (knex) {
     return knex.schema.createTable(`${process.env.DB_PREFIX}users_logs`, (table) => {
         table.increments('id');
-        table.integer('user_id').unsigned();
+        table.integer('user_id').unsigned(true);
         table.foreign('user_id').references('id').inTable(`${process.env.DB_PREFIX}users`);
         table.json('source').nullable();
         table.text('handle').notNullable();

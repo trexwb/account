@@ -2,7 +2,7 @@
  * @Author: trexwb
  * @Date: 2024-01-04 14:29:21
  * @LastEditors: trexwb
- * @LastEditTime: 2024-02-21 15:01:37
+ * @LastEditTime: 2024-04-16 11:41:43
  * @FilePath: /laboratory/microservice/account/knexfile.js
  * @Description: 
  * @一花一世界，一叶一如来
@@ -16,7 +16,7 @@ const knexConfig = require('@config/knex.js');
  * @type { Object.<string, import("knex").Knex.Config> }
  */
 module.exports = {
-    development: knexConfig.write,
-    staging: knexConfig.write,
-    production: knexConfig.write
+  development: knexConfig.write,
+  stage: knexConfig.write,
+  production: knexConfig.write
 };

@@ -2,7 +2,7 @@
  * @Author: trexwb
  * @Date: 2024-01-04 14:29:21
  * @LastEditors: trexwb
- * @LastEditTime: 2024-02-21 15:01:58
+ * @LastEditTime: 2024-04-16 10:06:04
  * @FilePath: /laboratory/microservice/account/migrations/20231216042911_permissions.js
  * @Description: 
  * @一花一世界，一叶一如来
@@ -17,8 +17,8 @@
 exports.up = function(knex) {
     return knex.schema.createTable(`${process.env.DB_PREFIX}permissions`, (table) => {
         table.increments('id');
-        table.string('site_id', 40).notNullable().comment('站点编号');
-        table.string('name', 40).nullable(false).comment('权限');
+        table.string('key',60).nullable(false).comment('名称');
+        table.string('value').nullable(false).comment('权限');
         table.json('extension').nullable().comment('扩展');
         table.specificType('status', 'TINYINT UNSIGNED').defaultTo(0).comment('状态');
         table.timestamps();

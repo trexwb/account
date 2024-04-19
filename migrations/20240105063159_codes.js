@@ -17,10 +17,10 @@
 exports.up = function(knex) {
     return knex.schema.createTable(`${process.env.DB_PREFIX}codes`, (table) => {
         table.increments('id');
-        table.integer('user_id').unsigned();
+        table.integer('user_id').unsigned(true);
         table.foreign('user_id').references('id').inTable(`${process.env.DB_PREFIX}users`);
         table.string('secret', 40).notNullable().comment('密钥');
-        table.integer('valid_time').unsigned().comment('有效时间');
+        table.integer('valid_time').unsigned(true).comment('有效时间');
         table.timestamps();
     });
 };

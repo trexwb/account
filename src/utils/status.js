@@ -2,7 +2,7 @@
  * @Author: trexwb
  * @Date: 2024-01-15 12:21:18
  * @LastEditors: trexwb
- * @LastEditTime: 2024-01-23 15:54:13
+ * @LastEditTime: 2024-04-09 15:56:35
  * @FilePath: /laboratory/microservice/account/src/utils/status.js
  * @Description: 
  * @一花一世界，一叶一如来
@@ -20,20 +20,20 @@
 // 500 Internal Server Error: 服务器内部错误，无法完成请求。
 
 module.exports = {
-    statusMap: {
-        200: 'Success',
-        201: 'Created',
-        204: 'No Content',
-        304: 'Not Modified',
-        400: 'Bad Request',
-        401: 'Unauthorized',
-        403: 'Forbidden',
-        404: 'Not Found',
-        500: 'Internal Server Error',
-    },
-    error: (msg) => {
-        return {
-            error: msg
-        }
+  statusMap: {
+    200: 'Success',
+    201: 'Created',
+    204: 'No Content',
+    304: 'Not Modified',
+    400: 'Bad Request',
+    401: 'Unauthorized',
+    403: 'Forbidden',
+    404: 'Not Found',
+    500: 'Internal Server Error',
+  },
+  error: (msg) => {
+    return {
+      error: msg
     }
+  }
 };

@@ -1,18 +1,48 @@
 # 开发日志
+## 20240418 v1.0.2 【已发布】
+遇到权限问题可通过清空account_roles_permissions表重新修复
+```sql
+INSERT INTO `account_roles_permissions` 
+  SELECT r.`site_id`,r.`id`,p.`id`
+  FROM `account_permissions` p
+  LEFT JOIN `account_roles` r ON JSON_CONTAINS(r.`permissions`, CONCAT('"', p.`key`, '"')) = 1
+  WHERE 1;
+```
+
+## 20240321 v1.0.1 【已发布】
+### 功能说明
+- 增加中后台用户状态
+- 增加用户访问过的站点记录
+
+### 数据库调整
+```
+npx knex migrate:make users_sites
+npx knex migrate:make add_status_to_users_roles
+npx cross-env knex seed:make seed_status_to_users_roles
+```
+> `npm i`
+
+> `npx knex migrate:latest`
+
+> `npx knex seed:run --specific=seed_status_to_users_roles.js` 导入默认数据，请正式服务慎重操作
+
+- `add_status_to_users_roles` `users_roles`表添加`status`字段
+- `seed_status_to_users_roles` 生成默认状态
+
 ## 20240223 v1.0 初创【已发布】
 ### 基础数据
 ```
-npx cross-env NODE_ENV=production knex migrate:make secrets
-npx cross-env NODE_ENV=production knex migrate:make secrets_logs
-npx cross-env NODE_ENV=production knex migrate:make users
-npx cross-env NODE_ENV=production knex migrate:make users_logs
-npx cross-env NODE_ENV=production knex migrate:make roles
-npx cross-env NODE_ENV=production knex migrate:make permissions
-npx cross-env NODE_ENV=production knex migrate:make roles_permissions
-npx cross-env NODE_ENV=production knex migrate:make users_roles
-npx cross-env NODE_ENV=production knex migrate:make users_alipay
-npx cross-env NODE_ENV=production knex migrate:make users_ding
-npx cross-env NODE_ENV=production knex migrate:make users_wechat
+npx knex migrate:make secrets
+npx knex migrate:make secrets_logs
+npx knex migrate:make users
+npx knex migrate:make users_logs
+npx knex migrate:make roles
+npx knex migrate:make permissions
+npx knex migrate:make roles_permissions
+npx knex migrate:make users_roles
+npx knex migrate:make users_alipay
+npx knex migrate:make users_ding
+npx knex migrate:make users_wechat
 ```
 
 - `secrets` API访问密钥
@@ -129,12 +159,12 @@ let result = proxy.authentication(令牌/uuid，[需要验证的权限数组])
 let result = proxy.usersList()
 // 返回数据如果有加密处理，需要把方法获取到的数据进行解密，`result.iv`存在时表示有加密
 // 解密防范
-const decryptData = async (_data) => {
+const decryptData = async (data) => {
     if (!accountService.serverRow.id) return false;
-    if (_data.encryptedData, _data.iv) {
-        return cryptTool.decrypt(_data.encryptedData, accountService.serverRow?.app_secret, _data.iv);
+    if (data.encryptedData, data.iv) {
+        return cryptTool.decrypt(data.encryptedData, accountService.serverRow?.app_secret, data.iv);
     }
-    return _data;
+    return data;
 }
 if (result && result.iv) { // 有加密返回时解密
     result = await decryptData(result);

@@ -1,42 +1,46 @@
 /*** 
  * @Author: trexwb
- * @Date: 2024-01-22 16:08:36
+ * @Date: 2024-03-21 11:23:30
  * @LastEditors: trexwb
- * @LastEditTime: 2024-04-16 17:50:32
- * @FilePath: /laboratory/microservice/account/src/app/model/rolesPermissions.js
+ * @LastEditTime: 2024-04-16 17:50:45
+ * @FilePath: /laboratory/microservice/account/src/app/model/usersAlipay.js
  * @Description: 
  * @一花一世界，一叶一如来
  * @Copyright (c) 2024 by 杭州大美, All Rights Reserved. 
  */
+
 const databaseCast = require('@cast/database');
 const utils = require('@utils/index');
 const logCast = require('@cast/log');
 
-const DEFAULT_LIMIT = 10; // 默认分页限制
-const MAX_LIMIT = 1000; // 最大分页限制
-const SHANGHAI_TZ = 'Asia/Shanghai'; // 时区常量
-const FORMAT = 'YYYY-MM-DD HH:mm:ss'; // 日期格式常量
-
-// 抽象日期格式化功能
-const formatDateTime = (date, timezone = SHANGHAI_TZ, format = FORMAT) => {
-  return moment(date).tz(timezone).format(format);
-};
-
-const rolesPermissionsModel = {
-	$table: `${databaseCast.prefix}roles_permissions`,// 为模型指定表名
+const usersRolesModel = {
+	$table: `${databaseCast.prefix}users_alipay`,// 为模型指定表名
 	$primaryKey: 'id', // 默认情况下指定'id'作为表主键，也可以指定主键名
 	$fillable: [
-		'role_id',
-		'permission_id'
+		'nickname',
+		'avatar',
+		'unionid',
+		'openid',
+		'uuid',
+		'extension',
+		'status',
+		'created_at',
+		'updated_at'
 	],// 定义允许添加、更新的字段白名单，不设置则无法添加数据
 	$guarded: ['id'],// 定义不允许更新的字段黑名单
 	$casts: {
 		site_id: 'string',
-		role_id: 'integer',
-		permission_id: 'integer'
+		nickname: 'string',
+		avatar: 'string',
+		unionid: 'string',
+		openid: 'string',
+		uuid: 'string',
+		extension: 'json',
+		status: 'integer'
 	},
 	$hidden: [
 		'site_id',
+		'deleted_at'
 	],
 	filterKeys: function (obj) {
 		return Object.keys(obj).filter(key => !this.$hidden.includes(key)).reduce((acc, key) => {
@@ -104,11 +108,36 @@ const rolesPermissionsModel = {
 			return result;
 		}, {});
 
-		try {
-			return await dbWrite(this.$table).insert({ ...dataRow });
-		} catch (error) {
-			logCast.writeError(__filename + ':' + error.toString());
-			return false;
+		if (!dataRow.id) {
+			return await dbWrite(this.$table).insert({ ...dataRow, created_at: dbWrite.fn.now(), updated_at: dbWrite.fn.now() });
+		} else {
+			try {
+				return await dbWrite(this.$table).select('id').where(function () {
+					this.where('id', '>', 0)
+					if (Array.isArray(dataRow.id)) {
+						if (dataRow.id.length > 0) this.whereIn('id', dataRow.id);
+					} else {
+						this.where('id', dataRow.id);
+					}
+				}).then(async (result) => {
+					if (result.length > 0) {
+						await dbWrite(this.$table).update({ ...dataRow, updated_at: dbWrite.fn.now() }).where(function () {
+							this.where('id', '>', 0)
+							if (Array.isArray(dataRow.id)) {
+								if (dataRow.id.length > 0) this.whereIn('id', dataRow.id);
+							} else {
+								this.where('id', dataRow.id);
+							}
+						});
+						return Array.isArray(dataRow.id) ? dataRow.id : [dataRow.id];
+					} else {
+						return await dbWrite(this.$table).insert({ ...dataRow, created_at: dbWrite.fn.now(), updated_at: dbWrite.fn.now() });
+					}
+				});
+			} catch (error) {
+				logCast.writeError(__filename + ':' + error.toString());
+				return false;
+			}
 		}
 	},
 	restore: async function (where) {
@@ -141,4 +170,4 @@ const rolesPermissionsModel = {
 	}
 }
 
-module.exports = rolesPermissionsModel;
+module.exports = usersRolesModel;

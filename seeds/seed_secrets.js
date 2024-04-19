@@ -2,7 +2,7 @@
  * @Author: trexwb
  * @Date: 2024-01-04 14:29:21
  * @LastEditors: trexwb
- * @LastEditTime: 2024-03-12 11:57:32
+ * @LastEditTime: 2024-04-16 10:38:56
  * @FilePath: /laboratory/microservice/account/seeds/seed_secrets.js
  * @Description: 
  * @一花一世界，一叶一如来
@@ -16,7 +16,14 @@ const utils = require('@utils/index');
  * @returns { Promise<void> } 
  */
 exports.seed = async function (knex) {
-  const total = (await knex.from(`${process.env.DB_PREFIX}secrets`).count('id', { as: 'total' }).first())?.total || 0;
+  const total = await knex.from(`${process.env.DB_PREFIX}secrets`)
+    .count('id', { as: 'total' })
+    .first()
+    .then((row) => {
+      return row.total || 0
+    }).catch(() => {
+      return 0
+    });
   if (total === 0) {
     // Deletes ALL existing entries
     // await knex(`${process.env.DB_PREFIX}secrets`).del()
@@ -30,7 +37,8 @@ exports.seed = async function (knex) {
             "accountSecrets",
             "accountRoles",
             "accountPermissions",
-            "accountUsers"
+            "accountUsers",
+            "accountTrash"
           ],
           "permissions": [
             "accountSecrets:read",
@@ -44,7 +52,10 @@ exports.seed = async function (knex) {
             "accountPermissions:delete",
             "accountUsers:read",
             "accountUsers:write",
-            "accountUsers:delete"
+            "accountUsers:delete",
+            "accountTrash:read",
+            "accountTrash:write",
+            "accountTrash:delete"
           ]
         }),
         extension: JSON.stringify({
@@ -75,6 +86,14 @@ exports.seed = async function (knex) {
             },
             "accountUsers": {
               "name": "用户管理",
+              "permissions": {
+                "read": "只读",
+                "write": "可写",
+                "delete": "删除"
+              }
+            },
+            "accountTrash": {
+              "name": "用户回收站",
               "permissions": {
                 "read": "只读",
                 "write": "可写",

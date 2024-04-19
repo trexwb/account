@@ -17,9 +17,9 @@
 exports.up = function(knex) {
     return knex.schema.createTable(`${process.env.DB_PREFIX}users_roles`, (table) => {
         table.string('site_id', 40).notNullable().comment('站点编号');
-        table.integer('user_id').unsigned().comment('用户编号');
+        table.integer('user_id').unsigned(true).comment('用户编号');
         table.foreign('user_id').references('id').inTable(`${process.env.DB_PREFIX}users`);
-        table.integer('role_id').unsigned().comment('角色编号');
+        table.integer('role_id').unsigned(true).comment('角色编号');
         table.foreign('role_id').references('id').inTable(`${process.env.DB_PREFIX}roles`);
         
     });

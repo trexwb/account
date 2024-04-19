@@ -23,7 +23,7 @@ const encrypt = (encryptedData, key, iv) => {
 		let encrypted = cipher.update(encryptedText, 'utf8', 'hex');
 		encrypted += cipher.final('hex');
 		return encrypted;
-	} catch (err) {
+	} catch (error) {
 		return false;
 	}
 }
@@ -34,7 +34,7 @@ const decrypt = (encryptedText, key, iv) => {
 		let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
 		decrypted += decipher.final('utf8');
 		return JSON.parse(decrypted);
-	} catch (err) {
+	} catch (error) {
 		return false;
 	}
 }

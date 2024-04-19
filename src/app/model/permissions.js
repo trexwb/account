@@ -2,7 +2,7 @@
  * @Author: trexwb
  * @Date: 2024-01-22 16:06:33
  * @LastEditors: trexwb
- * @LastEditTime: 2024-03-11 14:11:49
+ * @LastEditTime: 2024-04-16 17:50:20
  * @FilePath: /laboratory/microservice/account/src/app/model/permissions.js
  * @Description: 
  * @一花一世界，一叶一如来
@@ -10,13 +10,25 @@
  */
 const databaseCast = require('@cast/database');
 const utils = require('@utils/index');
+const logCast = require('@cast/log');
 const moment = require('moment-timezone');
 
-module.exports = {
+const DEFAULT_LIMIT = 10; // 默认分页限制
+const MAX_LIMIT = 1000; // 最大分页限制
+const SHANGHAI_TZ = 'Asia/Shanghai'; // 时区常量
+const FORMAT = 'YYYY-MM-DD HH:mm:ss'; // 日期格式常量
+
+// 抽象日期格式化功能
+const formatDateTime = (date, timezone = SHANGHAI_TZ, format = FORMAT) => {
+  return moment(date).tz(timezone).format(format);
+};
+
+const permissionsModel = {
 	$table: `${databaseCast.prefix}permissions`,// 为模型指定表名
 	$primaryKey: 'id', // 默认情况下指定'id'作为表主键，也可以指定主键名
 	$fillable: [
-		'name',
+		'key',
+    'value',
 		'extension',
 		'status',
 		'created_at',
@@ -24,12 +36,12 @@ module.exports = {
 	],// 定义允许添加、更新的字段白名单，不设置则无法添加数据
 	$guarded: ['id'],// 定义不允许更新的字段黑名单
 	$casts: {
-		name: 'string',
+		key: 'string',
+    value: 'string',
 		extension: 'json',
 		status: 'integer'
 	},
 	$hidden: [
-		'site_id',
 		'deleted_at'
 	],
 	filterKeys: function (obj) {
@@ -37,6 +49,91 @@ module.exports = {
 			acc[key] = obj[key];
 			return acc;
 		}, {});
+	},
+	// 抽象出通用的数据库查询逻辑
+	getRowOrTrashRow: async function (where, deletedAtQuery) {
+		const dbRead = databaseCast.dbRead();
+		try {
+			const query = dbRead.select([...new Set([...this.$guarded, ...this.$fillable, ...this.$hidden])])
+				.from(this.$table)
+				.where(where);
+			// 根据是否删除来添加相应的查询条件
+			if (deletedAtQuery) query.whereNotNull('deleted_at');
+			else query.whereNull('deleted_at');
+			return await query.first()
+				.then((row) => {
+					if (row) {
+						row.created_at = formatDateTime(row?.created_at, SHANGHAI_TZ, FORMAT);
+						row.updated_at = formatDateTime(row?.updated_at, SHANGHAI_TZ, FORMAT);
+					}
+					return JSON.parse(JSON.stringify(row));
+				})
+				.catch((error) => {
+					logCast.writeError(__filename + ':' + error.toString());
+					return false;
+				});
+		} catch (error) {
+			logCast.writeError(__filename + ':' + error.toString());
+			return false;
+		}
+	},
+	getRow: async function (where) {
+		return await this.getRowOrTrashRow(where, false);
+	},
+	getTrashRow: async function (where) {
+		return await this.getRowOrTrashRow(where, true);
+	},
+	getListOrTrashList: async function (where, order, limit, offset, deletedAtQuery) {
+		const dbRead = databaseCast.dbRead();
+		limit = limit > MAX_LIMIT ? MAX_LIMIT : limit || DEFAULT_LIMIT;
+		order = !order ? [{ column: 'id', order: 'ASC' }] : order;
+		try {
+			const queryTotal = dbRead.from(this.$table).where(where);
+			// 根据是否删除来添加相应的查询条件
+			if (deletedAtQuery) queryTotal.whereNotNull('deleted_at');
+			else queryTotal.whereNull('deleted_at');
+			const total = await queryTotal.count('id', { as: 'total' })
+				.first()
+				.then((row) => {
+					return row.total || 0;
+				}).catch(() => {
+					return 0;
+				});
+			if (total > 0) {
+				const queryRows = dbRead.from(this.$table).where(where);
+				// 根据是否删除来添加相应的查询条件
+				if (deletedAtQuery) queryRows.whereNotNull('deleted_at');
+				else queryRows.whereNull('deleted_at');
+				if (order) queryRows.orderBy(order)
+				// else queryRows.orderByRaw('if(`sort`>0,1,0) DESC,sort ASC').orderBy([{ column: 'sort', order: 'ASC' }]);
+				const rows = await queryRows.select([...new Set([...this.$guarded, ...this.$fillable])])
+					.limit(limit)
+					.offset(offset || 0)
+					.then((rows) => {
+						return rows.map(row => ({
+							...row,
+							created_at: formatDateTime(row?.created_at, SHANGHAI_TZ, FORMAT),
+							updated_at: formatDateTime(row?.updated_at, SHANGHAI_TZ, FORMAT),
+						}));
+					})
+					.catch((error) => {
+						logCast.writeError(__filename + ':' + error.toString());
+						return [];
+					});
+				return { total: total, list: rows };
+			} else {
+				return { total: 0, list: [] };
+			}
+		} catch (error) {
+			logCast.writeError(__filename + ':' + error.toString());
+			return { total: 0, list: [] };
+		}
+	},
+	getList: async function (where, order, limit, offset) {
+		return await this.getListOrTrashList(where, order, limit, offset, false);
+	},
+	getTrashList: async function (where, order, limit, offset) {
+		return await this.getListOrTrashList(where, order, limit, offset, true);
 	},
 	getAll: async function (where) {
 		const dbRead = databaseCast.dbRead();
@@ -47,141 +144,37 @@ module.exports = {
 				.then((rows) => {
 					return rows.map(row => ({
 						...row,
-						created_at: moment(row.created_at).tz('Asia/Shanghai').format('YYYY-MM-DD HH:mm:ss'),
-						updated_at: moment(row.updated_at).tz('Asia/Shanghai').format('YYYY-MM-DD HH:mm:ss')
+						created_at: formatDateTime(row?.created_at, SHANGHAI_TZ, FORMAT),
+						updated_at: formatDateTime(row?.updated_at, SHANGHAI_TZ, FORMAT)
 					}))
 				})
-				.catch(() => {
+				.catch((error) => {
+					logCast.writeError(__filename + ':' + error.toString());
 					return false;
 				});
-		} catch (err) {
+		} catch (error) {
+			logCast.writeError(__filename + ':' + error.toString());
 			return false;
 		}
 	},
-	getRow: async function (where) {
-		const dbRead = databaseCast.dbRead();
-		try {
-			return await dbRead.select([...new Set([...this.$guarded, ...this.$fillable, ...this.$hidden])])
-				.from(this.$table)
-				.where(where)
-				.whereNull('deleted_at')
-				.first()
-				.then((row) => {
-					row.created_at = moment(row.created_at).tz('Asia/Shanghai').format('YYYY-MM-DD HH:mm:ss');
-					row.updated_at = moment(row.updated_at).tz('Asia/Shanghai').format('YYYY-MM-DD HH:mm:ss');
-					return row;
-				})
-				.catch(() => {
-					return false;
-				});
-		} catch (err) {
-			return false;
-		}
-	},
-	getTrashRow: async function (where) {
-		const dbRead = databaseCast.dbRead();
-		try {
-			return await dbRead.select([...new Set([...this.$guarded, ...this.$fillable, ...this.$hidden])])
-				.from(this.$table)
-				.where(where)
-				.whereNotNull('deleted_at')
-				.first()
-				.then((row) => {
-					row.created_at = moment(row.created_at).tz('Asia/Shanghai').format('YYYY-MM-DD HH:mm:ss');
-					row.updated_at = moment(row.updated_at).tz('Asia/Shanghai').format('YYYY-MM-DD HH:mm:ss');
-					return row;
-				})
-				.catch(() => {
-					return false;
-				});
-		} catch (err) {
-			return false;
-		}
-	},
-	getList: async function (where, order, limit, offset) {
-		const dbRead = databaseCast.dbRead();
-		limit = limit > 1000 ? 1000 : limit;
-		order = !order ? [{ column: 'id', order: 'ASC' }] : order;
-		try {
-			const total = (await dbRead.from(this.$table)
-				.where(where)
-				.whereNull('deleted_at')
-				.count('id', { as: 'total' }).first())?.total || 0;
-			if (total > 0) {
-				const rows = await dbRead.select([...new Set([...this.$guarded, ...this.$fillable])])
-					.from(this.$table)
-					.where(where)
-					.whereNull('deleted_at')
-					.orderBy(order)
-					.limit(limit || 10)
-					.offset(offset || 0)
-					.then((rows) => {
-						return rows.map(row => ({
-							...row,
-							created_at: moment(row.created_at).tz('Asia/Shanghai').format('YYYY-MM-DD HH:mm:ss'),
-							updated_at: moment(row.updated_at).tz('Asia/Shanghai').format('YYYY-MM-DD HH:mm:ss')
-						}))
-					})
-					.catch(() => {
-						return false;
-					});
-				return { total: total, list: rows };
-			} else {
-				return { total: 0, list: [] };
-			}
-		} catch (err) {
-			return { total: 0, list: [] };
-		}
-	},
-	getTrashList: async function (where, order, limit, offset) {
-		const dbRead = databaseCast.dbRead();
-		limit = limit > 1000 ? 1000 : limit;
-		order = !order ? [{ column: 'id', order: 'ASC' }] : order;
-		try {
-			const total = (await dbRead.from(this.$table)
-				.where(where)
-				.whereNotNull('deleted_at')
-				.count('id', { as: 'total' }).first())?.total || 0;
-			if (total > 0) {
-				const rows = await dbRead.select([...new Set([...this.$guarded, ...this.$fillable])])
-					.from(this.$table)
-					.where(where)
-					.whereNotNull('deleted_at')
-					.orderBy(order)
-					.limit(limit || 10)
-					.offset(offset || 0)
-					.then((rows) => {
-						return rows.map(row => ({
-							...row,
-							created_at: moment(row.created_at).tz('Asia/Shanghai').format('YYYY-MM-DD HH:mm:ss'),
-							updated_at: moment(row.updated_at).tz('Asia/Shanghai').format('YYYY-MM-DD HH:mm:ss')
-						}))
-					})
-					.catch(() => {
-						return false;
-					});
-				return { total: total, list: rows };
-			} else {
-				return { total: 0, list: [] };
-			}
-		} catch (err) {
-			return { total: 0, list: [] };
-		}
-	},
-	save: async function (_data) {
-		if (!_data) return;
+	save: async function (data) {
+		if (!data) return;
 		const dbWrite = databaseCast.dbWrite();
 		const keysArray = [...this.$fillable, ...this.$guarded, ...this.$hidden]; // 过滤不存在的字段
 		const dataRow = keysArray.reduce((result, key) => {
-			if (_data.hasOwnProperty(key)) {
-				if (this.$casts[key] === 'json') {
-					result[key] = JSON.stringify(_data[key]);
-				} else if (this.$casts[key] === 'integer') {
-					result[key] = Number(_data[key]);
-				} else if (this.$casts[key] === 'datetime') {
-					result[key] = _data[key] ? utils.dateFormatter(_data[key], 'Y-m-d H:i:s', 1, false) : null;
+			// 确保data[key]存在且为可转换类型
+			if (data.hasOwnProperty(key) && data[key] !== null && data[key] !== undefined) {
+				const castType = this.$casts[key];
+				if (castType === 'json') {
+					result[key] = utils.safeJSONStringify(data[key]);
+				} else if (castType === 'integer') {
+					result[key] = utils.safeCastToInteger(data[key]);
+				} else if (castType === 'datetime') {
+					result[key] = data[key] ? utils.dateFormatter(data[key], 'Y-m-d H:i:s', 1, false) : null;
+				} else if (data[key] !== null && data[key] !== undefined) { // 添加对 data[key] 的非空检查
+					result[key] = data[key].toString();
 				} else {
-					result[key] = _data[key];
+					delete result[key];
 				}
 			}
 			return result;
@@ -198,7 +191,6 @@ module.exports = {
 					} else {
 						this.where('id', dataRow.id);
 					}
-					this.where('site_id', dataRow.site_id);
 				}).then(async (result) => {
 					if (result.length > 0) {
 						await dbWrite(this.$table).update({ ...dataRow, updated_at: dbWrite.fn.now() }).where(function () {
@@ -208,14 +200,14 @@ module.exports = {
 							} else {
 								this.where('id', dataRow.id);
 							}
-							this.where('site_id', dataRow.site_id);
 						});
 						return Array.isArray(dataRow.id) ? dataRow.id : [dataRow.id];
 					} else {
 						return await dbWrite(this.$table).insert({ ...dataRow, created_at: dbWrite.fn.now(), updated_at: dbWrite.fn.now() });
 					}
 				});
-			} catch (err) {
+			} catch (error) {
+				logCast.writeError(__filename + ':' + error.toString());
 				return false;
 			}
 		}
@@ -229,7 +221,8 @@ module.exports = {
 				.update({
 					deleted_at: null
 				});
-		} catch (err) {
+		} catch (error) {
+			logCast.writeError(__filename + ':' + error.toString());
 			return false;
 		}
 	},
@@ -242,8 +235,11 @@ module.exports = {
 				.update({
 					deleted_at: dbWrite.fn.now()
 				});
-		} catch (err) {
+		} catch (error) {
+			logCast.writeError(__filename + ':' + error.toString());
 			return false;
 		}
 	}
 }
+
+module.exports = permissionsModel;

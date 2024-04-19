@@ -2,7 +2,7 @@
  * @Author: trexwb
  * @Date: 2024-01-17 16:49:29
  * @LastEditors: trexwb
- * @LastEditTime: 2024-03-11 14:12:19
+ * @LastEditTime: 2024-04-16 17:50:38
  * @FilePath: /laboratory/microservice/account/src/app/model/secretsLogs.js
  * @Description: 
  * @一花一世界，一叶一如来
@@ -10,9 +10,20 @@
  */
 const databaseCast = require('@cast/database');
 const utils = require('@utils/index');
+const logCast = require('@cast/log');
 const moment = require('moment-timezone');
 
-module.exports = {
+const DEFAULT_LIMIT = 10; // 默认分页限制
+const MAX_LIMIT = 1000; // 最大分页限制
+const SHANGHAI_TZ = 'Asia/Shanghai'; // 时区常量
+const FORMAT = 'YYYY-MM-DD HH:mm:ss'; // 日期格式常量
+
+// 抽象日期格式化功能
+const formatDateTime = (date, timezone = SHANGHAI_TZ, format = FORMAT) => {
+	return date ? moment(date).tz(timezone).format(format) : null;
+};
+
+const secretsLogsModel = {
 	$table: `${databaseCast.prefix}secrets_logs`,// 为模型指定表名
 	$primaryKey: 'id', // 默认情况下指定'id'作为表主键，也可以指定主键名
 	$fillable: [
@@ -43,31 +54,39 @@ module.exports = {
 				.where(where)
 				.first()
 				.then((row) => {
-					row.created_at = moment(row.created_at).tz('Asia/Shanghai').format('YYYY-MM-DD HH:mm:ss');
-					row.updated_at = moment(row.updated_at).tz('Asia/Shanghai').format('YYYY-MM-DD HH:mm:ss');
-					return row;
+					if (row) {
+						row.created_at = formatDateTime(row?.created_at, SHANGHAI_TZ, FORMAT);
+						row.updated_at = formatDateTime(row?.updated_at, SHANGHAI_TZ, FORMAT);
+					}
+					return JSON.parse(JSON.stringify(row));
 				})
-				.catch(() => {
+				.catch((error) => {
+					logCast.writeError(__filename + ':' + error.toString());
 					return false;
 				});
-		} catch (err) {
+		} catch (error) {
+			logCast.writeError(__filename + ':' + error.toString());
 			return false;
 		}
 	},
-	save: async function (_data) {
-		if (!_data) return;
+	save: async function (data) {
+		if (!data) return;
 		const dbWrite = databaseCast.dbWrite();
 		const keysArray = [...this.$fillable, ...this.$guarded, ...this.$hidden]; // 这是你的键数组
 		const dataRow = keysArray.reduce((result, key) => {
-			if (_data.hasOwnProperty(key)) {
-				if (this.$casts[key] === 'json') {
-					result[key] = JSON.stringify(_data[key]);
-				} else if (this.$casts[key] === 'integer') {
-					result[key] = Number(_data[key]);
-				} else if (this.$casts[key] === 'datetime') {
-					result[key] = _data[key] ? utils.dateFormatter(_data[key], 'Y-m-d H:i:s', 1, false) : null;
+			// 确保data[key]存在且为可转换类型
+			if (data.hasOwnProperty(key) && data[key] !== null && data[key] !== undefined) {
+				const castType = this.$casts[key];
+				if (castType === 'json') {
+					result[key] = utils.safeJSONStringify(data[key]);
+				} else if (castType === 'integer') {
+					result[key] = utils.safeCastToInteger(data[key]);
+				} else if (castType === 'datetime') {
+					result[key] = data[key] ? utils.dateFormatter(data[key], 'Y-m-d H:i:s', 1, false) : null;
+				} else if (data[key] !== null && data[key] !== undefined) { // 添加对 data[key] 的非空检查
+					result[key] = data[key].toString();
 				} else {
-					result[key] = _data[key];
+					delete result[key];
 				}
 			}
 			return result;
@@ -98,9 +117,12 @@ module.exports = {
 						return await dbWrite(this.$table).insert({ ...dataRow, created_at: dbWrite.fn.now(), updated_at: dbWrite.fn.now() });
 					}
 				});
-			} catch (err) {
+			} catch (error) {
+				logCast.writeError(__filename + ':' + error.toString());
 				return false;
 			}
 		}
 	}
 }
+
+module.exports = secretsLogsModel;
