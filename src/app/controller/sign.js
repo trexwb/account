@@ -2,12 +2,14 @@
  * @Author: trexwb
  * @Date: 2024-01-18 11:37:21
  * @LastEditors: trexwb
- * @LastEditTime: 2024-04-03 10:34:17
- * @FilePath: /laboratory/microservice/account/src/app/controller/sign.js
+ * @LastEditTime: 2024-07-31 10:36:15
+ * @FilePath: /drive/Users/wbtrex/website/localServer/node/damei/laboratory/microservice/account/src/app/controller/sign.js
  * @Description: 
  * @一花一世界，一叶一如来
  * @Copyright (c) 2024 by 杭州大美, All Rights Reserved. 
  */
+'use strict';
+
 // require('dotenv').config();
 // console.log(process.env.NODE_ENV, process.env);
 const status = require('@utils/status');
@@ -21,7 +23,11 @@ const ERROR_MESSAGES = {
   ID_NOT_EMPTY: 'Id NOT Empty',
 };
 
-async function signIn(account, password) {
+async function signIn(...args) {
+  // 获取上下文
+  const statusSrgs = status.getContext(args);
+  const context = statusSrgs.context;
+  const [account = null, password = null] = statusSrgs.params;
   const cryptTool = require('@utils/cryptTool');
   const usersHelper = require('@helper/users');
   try {
@@ -65,7 +71,11 @@ async function signIn(account, password) {
   }
 }
 
-async function signSecret(uuid, secret) {
+async function signSecret(...args) {
+  // 获取上下文
+  const statusSrgs = status.getContext(args);
+  const context = statusSrgs.context;
+  const [uuid = null, secret = null] = statusSrgs.params;
   try {
     const cryptTool = require('@utils/cryptTool');
     const usersHelper = require('@helper/users');
@@ -91,7 +101,11 @@ async function signSecret(uuid, secret) {
   }
 }
 
-async function signInfo(id) {
+async function signInfo(...args) {
+  // 获取上下文
+  const statusSrgs = status.getContext(args);
+  const context = statusSrgs.context;
+  const [id = null] = statusSrgs.params;
   try {
     if (!id) {
       return status.error(ERROR_MESSAGES.ID_NOT_EMPTY);
@@ -101,7 +115,7 @@ async function signInfo(id) {
 
     // 拥有的所有角色
     if (userRow?.id) {
-      const rolesRows = await usersHelper.getUserRoles(userRow.id);
+      const rolesRows = await usersHelper.getUserRoles(context.secretRow?.siteId || 0, userRow.id);
       if (rolesRows) {
         userRow.roles = rolesRows.roles || [];
         userRow.permissions = rolesRows.permissions || [];
@@ -120,7 +134,11 @@ async function signInfo(id) {
   }
 }
 
-async function signOut(currentAccount) {
+async function signOut(...args) {
+  // 获取上下文
+  const statusSrgs = status.getContext(args);
+  const context = statusSrgs.context;
+  const [currentAccount = null] = statusSrgs.params;
   try {
     const usersHelper = require('@helper/users');
     return await usersHelper.setToken(currentAccount);

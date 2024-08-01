@@ -2,12 +2,14 @@
  * @Author: trexwb
  * @Date: 2024-01-12 10:57:08
  * @LastEditors: trexwb
- * @LastEditTime: 2024-04-09 15:53:07
- * @FilePath: /laboratory/microservice/account/src/app/middleware/verify.js
+ * @LastEditTime: 2024-07-31 10:34:04
+ * @FilePath: /drive/Users/wbtrex/website/localServer/node/damei/laboratory/microservice/account/src/app/middleware/verify.js
  * @Description: 
  * @一花一世界，一叶一如来
  * Copyright (c) 2024 by 杭州大美, All Rights Reserved. 
  */
+'use strict';
+
 // require('dotenv').config();
 // console.log(process.env.NODE_ENV, process.env);
 // 
@@ -54,14 +56,15 @@ const token = async (name, args, context, next) => {
   const status = require('@utils/status');
   // 获取客户端请求的Authorization Header
   const headers = context.request.headers;
+  const taskHeart = headers['x-task-heart'] || false;
+  if (taskHeart) {
+    // 心跳检测
+    return 'Success';
+  }
   const secretsHelper = require('@helper/secrets');
   const appId = headers['app-id'] || false;
   const appSecret = headers['app-secret'] || false;
-  if ('undefined' === typeof siteId) {
-    global.siteId = headers['site-id'] || false;
-  } else {
-    siteId = headers['site-id'] || false;
-  }
+  const siteId = headers['site-id'] || false;
   const timeStamp = (appSecret || '').toString().substring(32) || 0;
   if (!appId || timeStamp < Math.floor(Date.now() / 1000) - (process.env.TOKEN_TIME || 1800)) {
     return status.error('AppId Not Empty');
@@ -78,7 +81,10 @@ const token = async (name, args, context, next) => {
   if (appSecret !== newSecret) {
     return status.error('AppId Secret Error');
   }
-  process.env.SITE_ID = siteId;
+  context.secretRow = {
+    siteId,
+    ...secretRow
+  }
   const result = await next(name, args, context);
   // result.then(function (result) {
   // 	console.log("after invoke:", name, args, result);
@@ -88,10 +94,18 @@ const token = async (name, args, context, next) => {
 
 const sign = async (name, args, context, next) => {
   if (process.env.REQUEST_ENCRYPT === 'true') {
-    const headers = context.request.headers;
-    const secretsHelper = require('@helper/secrets');
-    const appId = process.env.SECRET_APP_ID || (headers['app-id'] || false);
-    const key = process.env.SECRET_APP_KEY || ((await secretsHelper.getAppId(appId)).app_secret || '');
+    if (!context.secretRow) {
+      const headers = context.request.headers;
+      const appId = headers['app-id'] || false;
+      const siteId = headers['site-id'] || false;
+      const secretsHelper = require('@helper/secrets');
+      const secretRow = await secretsHelper.getAppId(appId);
+      context.secretRow = {
+        siteId,
+        ...secretRow
+      }
+    }
+    const key = context.secretRow.app_secret || '';
     const { iv, encryptedData } = args;
     const cryptTool = require('@utils/cryptTool');
     const decryptedData = cryptTool.decrypt(encryptedData, key, iv || '');

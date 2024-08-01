@@ -2,12 +2,14 @@
  * @Author: trexwb
  * @Date: 2024-01-17 19:33:14
  * @LastEditors: trexwb
- * @LastEditTime: 2024-01-17 19:34:04
- * @FilePath: /node/damei/laboratory/microservice/account/src/utils/cryptTool.js
+ * @LastEditTime: 2024-05-11 21:17:31
+ * @FilePath: /laboratory/microservice/account/src/utils/cryptTool.js
  * @Description: 
  * @一花一世界，一叶一如来
  * @Copyright (c) 2024 by 杭州大美, All Rights Reserved. 
  */
+'use strict';
+
 const crypto = require('crypto');
 const md5 = (str) => {
 	const md5 = crypto.createHash('md5');

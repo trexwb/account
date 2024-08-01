@@ -2,12 +2,13 @@
  * @Author: trexwb
  * @Date: 2024-01-29 08:30:58
  * @LastEditors: trexwb
- * @LastEditTime: 2024-04-09 15:54:56
+ * @LastEditTime: 2024-06-13 09:31:39
  * @FilePath: /laboratory/microservice/account/src/config/knex.js
  * @Description: 
  * @一花一世界，一叶一如来
  * @Copyright (c) 2024 by 杭州大美, All Rights Reserved. 
  */
+'use strict';
 // Update with your config settings.
 // require('dotenv').config();
 // console.log(process.env.NODE_ENV, process.env);
@@ -29,7 +30,7 @@ function generateConfig(connectionType) {
       min: 0,
       max: 10
     },
-    acquireConnectionTimeout: 600,
+    acquireConnectionTimeout: 6000,
     log: {
       warn(message) {
         logCast.writeError(`[knex warn]:${message}`)
@@ -45,10 +46,10 @@ function generateConfig(connectionType) {
       }
     }
   };
-  if (connectionType === 'mysql2') {
+  if (connectionType === 'mysql' || connectionType === 'mysql2') {
     return {
       write: {
-        client: process.env.DB_CONNECTION,
+        client: process.env.DB_CONNECTION || 'mysql2',
         connection: {
           host: process.env.DB_WRITE_HOST || '',
           user: process.env.DB_USERNAME || '',
@@ -62,7 +63,7 @@ function generateConfig(connectionType) {
         ...commonConfig,
       },
       read: {
-        client: process.env.DB_CONNECTION,
+        client: process.env.DB_CONNECTION || 'mysql2',
         connection: {
           host: process.env.DB_READ_HOST || '',
           user: process.env.DB_USERNAME || '',
@@ -77,23 +78,23 @@ function generateConfig(connectionType) {
       }
     };
   }
-  if (connectionType === 'sqlite' || connectionType === 'sqlite3') {
+  if (connectionType === 'sqlite' || connectionType === 'sqlite3' || connectionType === 'better-sqlite3') {
     return {
       write: {
-        client: process.env.DB_CONNECTION || 'sqlite',
+        client: process.env.DB_CONNECTION || 'better-sqlite3',
         connection: {
           filename: alias.resolve(`@resources/database/${process.env.DB_FILE || 'database.db'}`),
           prefix: process.env.DB_PREFIX || '',
-          ...commonConfig
-        }
+        },
+        ...commonConfig,
       },
       read: {
-        ...commonConfig,
-        client: process.env.DB_CONNECTION || 'sqlite',
+        client: process.env.DB_CONNECTION || 'better-sqlite3',
         connection: {
           filename: alias.resolve(`@resources/database/${process.env.DB_FILE || 'database.db'}`),
           prefix: process.env.DB_PREFIX || '',
-        }
+        },
+        ...commonConfig,
       }
     };
   }

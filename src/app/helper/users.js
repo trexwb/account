@@ -2,12 +2,14 @@
  * @Author: trexwb
  * @Date: 2024-01-12 14:48:44
  * @LastEditors: trexwb
- * @LastEditTime: 2024-04-16 10:58:32
- * @FilePath: /laboratory/microservice/account/src/app/helper/users.js
+ * @LastEditTime: 2024-07-31 10:42:35
+ * @FilePath: /drive/Users/wbtrex/website/localServer/node/damei/laboratory/microservice/account/src/app/helper/users.js
  * @Description: 
  * @一花一世界，一叶一如来
  * Copyright (c) 2024 by 杭州大美, All Rights Reserved. 
  */
+'use strict';
+
 const utils = require('@utils/index');
 const cacheCast = require('@cast/cache');
 const usersModel = require('@model/users');
@@ -16,10 +18,6 @@ const usersRolesModel = require('@model/usersRoles');
 const usersSitesModel = require('@model/usersSites');
 const permissionsModel = require('@model/permissions');
 const rolesPermissionsModel = require('@model/rolesPermissions');
-
-if ('undefined' === typeof siteId) {
-  global.siteId = process.env.SITE_ID || 0;
-}
 
 function buildWhere(that, where) {
   function applyWhereCondition(field, value) {
@@ -69,9 +67,9 @@ function buildWhere(that, where) {
   if (where.role_id) {
     that.whereIn('id', function () {
       if (Array.isArray(where.role_id)) {
-        if (where.role_id.length > 0) this.select('user_id').from(usersRolesModel.$table).where('site_id', siteId).whereIn('role_id', where.role_id);
+        if (where.role_id.length > 0) this.select('user_id').from(usersRolesModel.$table).whereIn('role_id', where.role_id);
       } else {
-        this.select('user_id').from(usersRolesModel.$table).where('site_id', siteId).where('role_id', where.role_id);
+        this.select('user_id').from(usersRolesModel.$table).where('role_id', where.role_id);
       }
     });
     // 效率低下时请更换成whereExists
@@ -93,18 +91,10 @@ function buildWhere(that, where) {
     //   }
     // })
   }
-  // 来自指定站点的用户
-  if (where.site) {
+  if (where.site_id) {
     that.whereIn('id', function () {
-      this.select('user_id').from(usersSitesModel.$table).where('site_id', siteId);
+      this.select('user_id').from(usersSitesModel.$table).where('site_id', where.site_id);
     });
-    // 效率低下时请更换成whereExists
-    // that.whereExists(function () {
-    //   this.select('user_id')
-    //     .from(usersRolesModel.$table)
-    //     .whereRaw(`${usersRolesModel.$table}.user_id = ${that.$table}.id`)
-    //     .where('site_id', siteId);
-    // })
   }
 }
 
@@ -117,7 +107,7 @@ const usersHelper = {
       const page = utils.safeCastToInteger(_page ?? 1);
       const pageSize = utils.safeCastToInteger(_pageSize ?? 10);
       const offset = utils.safeCastToInteger(!page ? 0 : pageSize * (page - 1));
-      const cacheKey = `users:[list:${JSON.stringify([sortWhere, sortOrder, page, pageSize])}]`;
+      const cacheKey = `users[list:${JSON.stringify([sortWhere, sortOrder, page, pageSize])}]`;
       rows = await cacheCast.get(cacheKey);
       if (!rows?.total) {
         rows = await usersModel.getList(function () {
@@ -136,7 +126,7 @@ const usersHelper = {
     if (!id) return {};
     let row = {};
     try {
-      const cacheKey = `users:${siteId}:[id:${id}]`;
+      const cacheKey = `users[id:${id}]`;
       row = await cacheCast.get(cacheKey);
       if (!row?.id) {
         row = await usersModel.getRow(function () {
@@ -157,7 +147,7 @@ const usersHelper = {
     if (!uuid) return {};
     let row = {};
     try {
-      const cacheKey = `users:${siteId}:[uuid:${uuid}]`;
+      const cacheKey = `users[uuid:${uuid}]`;
       row = await cacheCast.get(cacheKey);
       if (!row?.id) {
         row = await usersModel.getRow(function () {
@@ -178,7 +168,7 @@ const usersHelper = {
     if (!where) return {};
     let row = {};
     try {
-      const cacheKey = `users:${siteId}:[row:${JSON.stringify([where])}]`;
+      const cacheKey = `users[row:${JSON.stringify([where])}]`;
       row = await cacheCast.get(cacheKey);
       if (!row?.id) {
         row = await usersModel.getRow(function () {
@@ -193,11 +183,12 @@ const usersHelper = {
     }
     return row;
   },
-  getUserRoles: async (id) => {
+  getUserRoles: async (siteId, id) => {
+    if (!siteId) return {};
     if (!id) return {};
     let row = {};
     try {
-      const cacheKey = `users:${siteId}:[roles:${id}]`;
+      const cacheKey = `users[roles:${siteId},${id}]`;
       row = await cacheCast.get(cacheKey);
       if (!row?.id) {
         // 拥有的所有角色
@@ -277,6 +268,19 @@ const usersHelper = {
     }
     return;
   },
+  update: async (where, data) => {
+    if (!where || !data) return;
+    let affects = {};
+    try {
+      affects = await usersModel.update(function () {
+        buildWhere(this, where)
+      }, data);
+      await cacheCast.clearCacheByTag('users');
+    } catch (error) {
+      throw error;
+    }
+    return affects;
+  },
   save: async (data) => {
     if (!data) return;
     let affects = {};
@@ -288,14 +292,12 @@ const usersHelper = {
     }
     return affects;
   },
-  restore: async (id) => {
-    if (!id) return;
+  restore: async (where) => {
+    if (!where) return;
     let affects = {};
     try {
       affects = await usersModel.restore(function () {
-        buildWhere(this, {
-          "id": id
-        })
+        buildWhere(this, where)
       });
       await cacheCast.clearCacheByTag('users');
     } catch (error) {
@@ -303,14 +305,12 @@ const usersHelper = {
     }
     return affects;
   },
-  delete: async (id) => {
-    if (!id) return;
+  delete: async (where) => {
+    if (!where) return;
     let affects = {};
     try {
-      affects = await usersModel.softDelete(function () {
-        buildWhere(this, {
-          "id": id
-        })
+      affects = await usersModel.delete(function () {
+        buildWhere(this, where)
       });
       await cacheCast.clearCacheByTag('users');
     } catch (error) {

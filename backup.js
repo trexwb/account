@@ -32,7 +32,7 @@ async function backupTable(table) {
     await knex.raw('SET FOREIGN_KEY_CHECKS=1');
 };`
       const now = new Date();
-      const saveDir = path.join(`/data/database`, process.env.NODE_ENV, process.env.DB_DATABASE, now.toISOString().slice(0, 10));
+      const saveDir = path.join(`/data/database`, process.env.DB_DATABASE, now.toISOString().slice(0, 10));
       if (!fs.existsSync(saveDir)) {
         fs.mkdirSync(saveDir, { recursive: true });
       }

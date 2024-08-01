@@ -1,7 +1,14 @@
 # 开发日志
+## 20240801 v1.0.3 【已发布】
+- 增加事件能力
+- 增加队列能力
+- 增加计划任务
+- 调整FC响应方法
+
 ## 20240418 v1.0.2 【已发布】
 遇到权限问题可通过清空account_roles_permissions表重新修复
 ```sql
+TRUNCATE TABLE `account_roles_permissions`;
 INSERT INTO `account_roles_permissions` 
   SELECT r.`site_id`,r.`id`,p.`id`
   FROM `account_permissions` p
@@ -18,7 +25,8 @@ INSERT INTO `account_roles_permissions`
 ```
 npx knex migrate:make users_sites
 npx knex migrate:make add_status_to_users_roles
-npx cross-env knex seed:make seed_status_to_users_roles
+npx knex seed:make seed_status_to_users_roles
+npx knex seed:make seed_roles_to_roles_permissions
 ```
 > `npm i`
 

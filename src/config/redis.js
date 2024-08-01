@@ -2,12 +2,14 @@
  * @Author: trexwb
  * @Date: 2024-01-17 16:49:29
  * @LastEditors: trexwb
- * @LastEditTime: 2024-04-09 15:55:06
+ * @LastEditTime: 2024-05-11 21:17:22
  * @FilePath: /laboratory/microservice/account/src/config/redis.js
  * @Description: 
  * @一花一世界，一叶一如来
  * @Copyright (c) 2024 by 杭州大美, All Rights Reserved. 
  */
+'use strict';
+
 // Update with your config settings.
 // require('dotenv').config();
 // console.log(process.env);
