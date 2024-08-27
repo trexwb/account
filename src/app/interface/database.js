@@ -2,8 +2,8 @@
  * @Author: trexwb
  * @Date: 2024-01-15 19:58:20
  * @LastEditors: trexwb
- * @LastEditTime: 2024-05-29 11:15:03
- * @FilePath: /laboratory/microservice/account/src/app/cast/database.js
+ * @LastEditTime: 2024-08-23 17:29:27
+ * @FilePath: /drive/Users/wbtrex/website/localServer/node/damei/laboratory/microservice/account/src/app/interface/database.js
  * @Description: 
  * @一花一世界，一叶一如来
  * @Copyright (c) 2024 by 杭州大美, All Rights Reserved. 
@@ -13,7 +13,7 @@
 // console.log(process.env.NODE_ENV, process.env);
 const knex = require('knex');
 const knexConfig = require('@config/knex');
-// const logCast = require('@cast/log');
+// const logInterface = require('@interface/log');
 
 // const dbRead = knex(knexConfig.read);
 // const dbWrite = knex(knexConfig.write);

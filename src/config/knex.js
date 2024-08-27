@@ -2,8 +2,8 @@
  * @Author: trexwb
  * @Date: 2024-01-29 08:30:58
  * @LastEditors: trexwb
- * @LastEditTime: 2024-06-13 09:31:39
- * @FilePath: /laboratory/microservice/account/src/config/knex.js
+ * @LastEditTime: 2024-08-23 17:29:54
+ * @FilePath: /drive/Users/wbtrex/website/localServer/node/damei/laboratory/microservice/account/src/config/knex.js
  * @Description: 
  * @一花一世界，一叶一如来
  * @Copyright (c) 2024 by 杭州大美, All Rights Reserved. 
@@ -13,7 +13,7 @@
 // require('dotenv').config();
 // console.log(process.env.NODE_ENV, process.env);
 const alias = require('@utils/alias');
-const logCast = require('@cast/log');
+const logInterface = require('@interface/log');
 
 // 重构代码以提高可读性和可维护性
 function generateConfig(connectionType) {
@@ -33,16 +33,16 @@ function generateConfig(connectionType) {
     acquireConnectionTimeout: 6000,
     log: {
       warn(message) {
-        logCast.writeError(`[knex warn]:${message}`)
+        logInterface.writeError(`[knex warn]:${message}`)
       },
       error(message) {
-        logCast.writeError(`[knex error:${message}`)
+        logInterface.writeError(`[knex error:${message}`)
       },
       deprecate(message) {
-        logCast.writeError(`[knex deprecate:${message}`)
+        logInterface.writeError(`[knex deprecate:${message}`)
       },
       debug(message) {
-        logCast.writeError(`[knex debug:${message}`)
+        logInterface.writeError(`[knex debug:${message}`)
       }
     }
   };

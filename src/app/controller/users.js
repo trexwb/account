@@ -2,7 +2,7 @@
  * @Author: trexwb
  * @Date: 2024-01-12 16:38:52
  * @LastEditors: trexwb
- * @LastEditTime: 2024-07-08 14:55:19
+ * @LastEditTime: 2024-08-23 17:29:12
  * @FilePath: /drive/Users/wbtrex/website/localServer/node/damei/laboratory/microservice/account/src/app/controller/users.js
  * @Description: 
  * @一花一世界，一叶一如来
@@ -13,14 +13,14 @@
 // require('dotenv').config();
 // console.log(process.env.NODE_ENV, process.env);
 const status = require('@utils/status');
-const logCast = require('@cast/log');
+const logInterface = require('@interface/log');
 
-async function usersList(...args) {
-  // 获取上下文
-  const statusSrgs = status.getContext(args);
-  const context = statusSrgs.context;
-  const [filter = {}, sort = null, page = 1, pageSize = 10] = statusSrgs.params;
-  if (!status.havePermissions('accountUsers', 'read', context.secretRow?.permissions)) {
+async function usersList(filter = {}, sort = null, page = 1, pageSize = 10, context) { // usersList(...args) {
+  // // 获取上下文
+  // const statusSrgs = status.getContext(args);
+  // const context = statusSrgs.context;
+  // const [filter = {}, sort = null, page = 1, pageSize = 10] = statusSrgs.params;
+  if (!status.havePermissions('accountUsers', 'read', context?.secretRow?.permissions)) {
     return status.error('No relevant operation authority.');
   }
   try {
@@ -30,20 +30,21 @@ async function usersList(...args) {
     if (match) {
       order = [{ column: match[2], order: match[1] === '-' ? 'DESC' : 'ASC' }];
     }
+    if (!filter) filter = {};
     const usersHelper = require('@helper/users');
     return await usersHelper.getList(filter, order, page || 1, pageSize || 10);
   } catch (error) {
-    logCast.writeError(__filename + ':' + error.toString());
+    logInterface.writeError(__filename + ':' + error.toString());
     return false;
   }
 }
 
-async function usersDetail(...args) {
-  // 获取上下文
-  const statusSrgs = status.getContext(args);
-  const context = statusSrgs.context;
-  const [id = null] = statusSrgs.params;
-  if (!status.havePermissions('accountUsers', 'read', context.secretRow?.permissions)) {
+async function usersDetail(id = null, context) { // usersDetail(...args) {
+  // // 获取上下文
+  // const statusSrgs = status.getContext(args);
+  // const context = statusSrgs.context;
+  // const [id = null] = statusSrgs.params;
+  if (!status.havePermissions('accountUsers', 'read', context?.secretRow?.permissions)) {
     return status.error('No relevant operation authority.');
   }
   if (!id) {
@@ -56,17 +57,17 @@ async function usersDetail(...args) {
     }
     return await usersHelper.getRow(id);
   } catch (error) {
-    logCast.writeError(__filename + ':' + error.toString());
+    logInterface.writeError(__filename + ':' + error.toString());
     return false;
   }
 }
 
-async function usersSave(...args) {
-  // 获取上下文
-  const statusSrgs = status.getContext(args);
-  const context = statusSrgs.context;
-  const [data = null] = statusSrgs.params;
-  if (!status.havePermissions('accountUsers', 'write', context.secretRow?.permissions)) {
+async function usersSave(data = null, context) { // usersSave(...args) {
+  // // 获取上下文
+  // const statusSrgs = status.getContext(args);
+  // const context = statusSrgs.context;
+  // const [data = null] = statusSrgs.params;
+  if (!status.havePermissions('accountUsers', 'write', context?.secretRow?.permissions)) {
     return status.error('No relevant operation authority.');
   }
   if (!data) {
@@ -93,18 +94,18 @@ async function usersSave(...args) {
       user_id: lastId[0] || lastId
     };
   } catch (error) {
-    logCast.writeError(__filename + ':' + error.toString());
+    logInterface.writeError(__filename + ':' + error.toString());
     return false;
   }
 }
 
 // 启用
-async function usersEnable(...args) {
-  // 获取上下文
-  const statusSrgs = status.getContext(args);
-  const context = statusSrgs.context;
-  const [id = null] = statusSrgs.params;
-  if (!status.havePermissions('accountUsers', 'write', context.secretRow?.permissions)) {
+async function usersEnable(id = null, context) { // usersEnable(...args) {
+  // // 获取上下文
+  // const statusSrgs = status.getContext(args);
+  // const context = statusSrgs.context;
+  // const [id = null] = statusSrgs.params;
+  if (!status.havePermissions('accountUsers', 'write', context?.secretRow?.permissions)) {
     return status.error('No relevant operation authority.');
   }
   if (!id) {
@@ -118,19 +119,18 @@ async function usersEnable(...args) {
       status: 1
     });
   } catch (error) {
-    logCast.writeError(__filename + ':' + error.toString());
+    logInterface.writeError(__filename + ':' + error.toString());
     return false;
   }
 }
 
 // 禁用
-async function usersDisable(...args) {
-  // 获取上下文
-  // 获取上下文
-  const statusSrgs = status.getContext(args);
-  const context = statusSrgs.context;
-  const [id = null] = statusSrgs.params;
-  if (!status.havePermissions('accountUsers', 'write', context.secretRow?.permissions)) {
+async function usersDisable(id = null, context) { // usersDisable(...args) {
+  // // 获取上下文
+  // const statusSrgs = status.getContext(args);
+  // const context = statusSrgs.context;
+  // const [id = null] = statusSrgs.params;
+  if (!status.havePermissions('accountUsers', 'write', context?.secretRow?.permissions)) {
     return status.error('No relevant operation authority.');
   }
   if (!id) {
@@ -144,17 +144,17 @@ async function usersDisable(...args) {
       status: 0
     });
   } catch (error) {
-    logCast.writeError(__filename + ':' + error.toString());
+    logInterface.writeError(__filename + ':' + error.toString());
     return false;
   }
 }
 
-async function usersRestore(...args) {
-  // 获取上下文
-  const statusSrgs = status.getContext(args);
-  const context = statusSrgs.context;
-  const [id = null] = statusSrgs.params;
-  if (!status.havePermissions('accountUsers', 'delete', context.secretRow?.permissions)) {
+async function usersRestore(id = null, context) { // usersRestore(...args) {
+  // // 获取上下文
+  // const statusSrgs = status.getContext(args);
+  // const context = statusSrgs.context;
+  // const [id = null] = statusSrgs.params;
+  if (!status.havePermissions('accountUsers', 'delete', context?.secretRow?.permissions)) {
     return status.error('No relevant operation authority.');
   }
   if (!id) {
@@ -164,17 +164,17 @@ async function usersRestore(...args) {
     const usersHelper = require('@helper/users');
     return await usersHelper.restore({ id });
   } catch (error) {
-    logCast.writeError(__filename + ':' + error.toString());
+    logInterface.writeError(__filename + ':' + error.toString());
     return false;
   }
 }
 
-async function usersDelete(...args) {
-  // 获取上下文
-  const statusSrgs = status.getContext(args);
-  const context = statusSrgs.context;
-  const [id = null] = statusSrgs.params;
-  if (!status.havePermissions('accountUsers', 'delete', context.secretRow?.permissions)) {
+async function usersDelete(id = null, context) { // usersDelete(...args) {
+  // // 获取上下文
+  // const statusSrgs = status.getContext(args);
+  // const context = statusSrgs.context;
+  // const [id = null] = statusSrgs.params;
+  if (!status.havePermissions('accountUsers', 'delete', context?.secretRow?.permissions)) {
     return status.error('No relevant operation authority.');
   }
   if (!id) {
@@ -184,7 +184,7 @@ async function usersDelete(...args) {
     const usersHelper = require('@helper/users');
     return await usersHelper.delete({ id });
   } catch (error) {
-    logCast.writeError(__filename + ':' + error.toString());
+    logInterface.writeError(__filename + ':' + error.toString());
     return false;
   }
 }

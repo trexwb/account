@@ -2,7 +2,7 @@
  * @Author: trexwb
  * @Date: 2024-01-18 11:37:21
  * @LastEditors: trexwb
- * @LastEditTime: 2024-07-31 10:36:15
+ * @LastEditTime: 2024-08-23 17:54:28
  * @FilePath: /drive/Users/wbtrex/website/localServer/node/damei/laboratory/microservice/account/src/app/controller/sign.js
  * @Description: 
  * @一花一世界，一叶一如来
@@ -13,7 +13,7 @@
 // require('dotenv').config();
 // console.log(process.env.NODE_ENV, process.env);
 const status = require('@utils/status');
-const logCast = require('@cast/log');
+const logInterface = require('@interface/log');
 
 const ERROR_MESSAGES = {
   ACCOUNT_NOT_EMPTY: 'Account NOT Empty',
@@ -23,11 +23,11 @@ const ERROR_MESSAGES = {
   ID_NOT_EMPTY: 'Id NOT Empty',
 };
 
-async function signIn(...args) {
-  // 获取上下文
-  const statusSrgs = status.getContext(args);
-  const context = statusSrgs.context;
-  const [account = null, password = null] = statusSrgs.params;
+async function signIn(account = null, password = null, context) { // signIn(...args)
+  // // 获取上下文
+  // const statusSrgs = status.getContext(args);
+  // const context = statusSrgs.context;
+  // const [account = null, password = null] = statusSrgs.params;
   const cryptTool = require('@utils/cryptTool');
   const usersHelper = require('@helper/users');
   try {
@@ -66,16 +66,16 @@ async function signIn(...args) {
       remember_token: userRow.remember_token,
     };
   } catch (error) {
-    logCast.writeError(__filename + ':' + error.toString());
+    logInterface.writeError(__filename + ':' + error.toString());
     return false;
   }
 }
 
-async function signSecret(...args) {
-  // 获取上下文
-  const statusSrgs = status.getContext(args);
-  const context = statusSrgs.context;
-  const [uuid = null, secret = null] = statusSrgs.params;
+async function signSecret(uuid = null, secret = null, context) { // signSecret(...args)
+  // // 获取上下文
+  // const statusSrgs = status.getContext(args);
+  // const context = statusSrgs.context;
+  // const [uuid = null, secret = null] = statusSrgs.params;
   try {
     const cryptTool = require('@utils/cryptTool');
     const usersHelper = require('@helper/users');
@@ -96,16 +96,16 @@ async function signSecret(...args) {
       remember_token: userRow.remember_token,
     };
   } catch (error) {
-    logCast.writeError(__filename + ':' + error.toString());
+    logInterface.writeError(__filename + ':' + error.toString());
     return false;
   }
 }
 
-async function signInfo(...args) {
-  // 获取上下文
-  const statusSrgs = status.getContext(args);
-  const context = statusSrgs.context;
-  const [id = null] = statusSrgs.params;
+async function signInfo(id = null, context) { // signInfo(...args)
+  // // 获取上下文
+  // const statusSrgs = status.getContext(args);
+  // const context = statusSrgs.context;
+  // const [id = null] = statusSrgs.params;
   try {
     if (!id) {
       return status.error(ERROR_MESSAGES.ID_NOT_EMPTY);
@@ -115,7 +115,7 @@ async function signInfo(...args) {
 
     // 拥有的所有角色
     if (userRow?.id) {
-      const rolesRows = await usersHelper.getUserRoles(context.secretRow?.siteId || 0, userRow.id);
+      const rolesRows = await usersHelper.getUserRoles(context.secretRow?.siteId, userRow.id);
       if (rolesRows) {
         userRow.roles = rolesRows.roles || [];
         userRow.permissions = rolesRows.permissions || [];
@@ -129,21 +129,21 @@ async function signInfo(...args) {
       permissions: userRow.permissions || [],
     };
   } catch (error) {
-    logCast.writeError(__filename + ':' + error.toString());
+    logInterface.writeError(__filename + ':' + error.toString());
     return false;
   }
 }
 
-async function signOut(...args) {
-  // 获取上下文
-  const statusSrgs = status.getContext(args);
-  const context = statusSrgs.context;
-  const [currentAccount = null] = statusSrgs.params;
+async function signOut(currentAccount = null, context) { // signOut(...args)
+  // // 获取上下文
+  // const statusSrgs = status.getContext(args);
+  // const context = statusSrgs.context;
+  // const [currentAccount = null] = statusSrgs.params;
   try {
     const usersHelper = require('@helper/users');
     return await usersHelper.setToken(currentAccount);
   } catch (error) {
-    logCast.writeError(__filename + ':' + error.toString());
+    logInterface.writeError(__filename + ':' + error.toString());
     return false;
   }
 }

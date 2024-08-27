@@ -2,7 +2,7 @@
  * @Author: trexwb
  * @Date: 2024-01-17 16:49:29
  * @LastEditors: trexwb
- * @LastEditTime: 2024-07-31 10:23:52
+ * @LastEditTime: 2024-08-23 17:32:49
  * @FilePath: /drive/Users/wbtrex/website/localServer/node/damei/laboratory/microservice/account/src/app/middleware/response.js
  * @Description: 
  * @一花一世界，一叶一如来
@@ -14,8 +14,8 @@
 // console.log(process.env.NODE_ENV, process.env);
 // const status = require('@utils/status');
 
-// const cacheCast = require('@cast/cache');
-// const databaseCast = require('@cast/database');
+// const cacheInterface = require('@interface/cache');
+// const dbInterface = require('@interface/database');
 
 // const errorCode = (code) => {
 // 	const statusMap = status.statusMap;
@@ -60,13 +60,13 @@ module.exports = {
     }
     // try {
     // 	// 输出前关闭数据库
-    // 	const cacheCast = require('@cast/cache');
-    // 	cacheCast.destroy();
+    // 	const cacheInterface = require('@interface/cache');
+    // 	cacheInterface.destroy();
     // } catch (e) { }
     // try {
     // 	// 输出前关闭数据库
-    // 	const databaseCast = require('@cast/database');
-    // 	databaseCast.destroy();
+    // 	const dbInterface = require('@interface/database');
+    // 	dbInterface.destroy();
     // } catch (e) { }
     return result;
   }

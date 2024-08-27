@@ -2,8 +2,8 @@
  * @Author: trexwb
  * @Date: 2024-02-01 14:48:18
  * @LastEditors: trexwb
- * @LastEditTime: 2024-08-01 09:44:01
- * @FilePath: /drive/Users/wbtrex/website/localServer/node/damei/laboratory/microservice/account/index.js
+ * @LastEditTime: 2024-08-23 17:32:03
+ * @FilePath: /drive/Users/wbtrex/website/localServer/node/damei/laboratory/microservice/account/src/index.js
  * @Description: 
  * @一花一世界，一叶一如来
  * @Copyright (c) 2024 by 杭州大美, All Rights Reserved.
@@ -25,17 +25,17 @@ function initApp() {
   });
 
   // 安全校验
-  const verifyMiddleware = require('@middleware/verify');
-  // server.use(verifyMiddleware.sanitizeInput); // 安全过滤
-  server.use(verifyMiddleware.token); // app校验
-  if (process.env.REQUEST_ENCRYPT === 'true') { server.use(verifyMiddleware.sign); } // 数据加密传输
+  const middlewareVerify = require('@middleware/verify');
+  if (process.env.XSS === 'true') { server.use(middlewareVerify.sanitizeInput); } // xss过滤
+  server.use(middlewareVerify.token); // app校验
+  if (process.env.REQUEST_ENCRYPT === 'true') { server.use(middlewareVerify.sign); } // 数据加密传输
 
   // 统一返回
-  const responseMiddleware = require('@middleware/response');
-  server.use(responseMiddleware.factory);
+  const middlewareResponse = require('@middleware/response');
+  server.use(middlewareResponse.factory);
 
-  const routeMiddleware = require('@middleware/route');
-  routeMiddleware.controller(server);
+  const middlewareRoute = require('@middleware/route');
+  middlewareRoute.controller(server);
 
   console.log(`Server running at ${process.env.APP_URL || 'http://0.0.0.0'}:${process.env.PORT || 8000}/`);
   server.start();
@@ -83,13 +83,13 @@ exports.initialize = function (context, callback) {
 module.exports.preFreeze = function (context, callback) {
   try {
     // 销毁服务前关闭数据库
-    const cacheCast = require('@cast/cache');
-    cacheCast.destroy();
+    const cacheInterface = require('@interface/cache');
+    cacheInterface.destroy();
   } catch (e) { }
   try {
     // 销毁服务前关闭数据库
-    const databaseCast = require('@cast/database');
-    databaseCast.destroy();
+    const dbInterface = require('@interface/database');
+    dbInterface.destroy();
   } catch (e) { }
   try {
     // 销毁服务前关闭数据库
@@ -101,13 +101,13 @@ module.exports.preFreeze = function (context, callback) {
 module.exports.preStop = function (context, callback) {
   try {
     // 销毁服务前关闭数据库
-    const cacheCast = require('@cast/cache');
-    cacheCast.destroy();
+    const cacheInterface = require('@interface/cache');
+    cacheInterface.destroy();
   } catch (e) { }
   try {
     // 销毁服务前关闭数据库
-    const databaseCast = require('@cast/database');
-    databaseCast.destroy();
+    const dbInterface = require('@interface/database');
+    dbInterface.destroy();
   } catch (e) { }
   try {
     // 销毁服务前关闭数据库

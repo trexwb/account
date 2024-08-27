@@ -2,7 +2,7 @@
  * @Author: trexwb
  * @Date: 2024-01-18 17:18:38
  * @LastEditors: trexwb
- * @LastEditTime: 2024-07-31 10:37:16
+ * @LastEditTime: 2024-08-23 17:29:16
  * @FilePath: /drive/Users/wbtrex/website/localServer/node/damei/laboratory/microservice/account/src/app/controller/verify.js
  * @Description: 
  * @一花一世界，一叶一如来
@@ -13,13 +13,13 @@
 // require('dotenv').config();
 // console.log(process.env.NODE_ENV, process.env);
 const status = require('@utils/status');
-const logCast = require('@cast/log');
+const logInterface = require('@interface/log');
 
-async function verifyToken(...args) {
-  // 获取上下文
-  const statusSrgs = status.getContext(args);
-  const context = statusSrgs.context;
-  const [token = null] = statusSrgs.params;
+async function verifyToken(token = null, context) { // verifyToken(...args) {
+  // // 获取上下文
+  // const statusSrgs = status.getContext(args);
+  // const context = statusSrgs.context;
+  // const [token = null] = statusSrgs.params;
   if (!token) {
     return status.error('token Not Empty');
   }
@@ -35,23 +35,23 @@ async function verifyToken(...args) {
       return status.error('Token User Status Error');
     }
     // 拥有的所有角色
-    const rolesRows = await usersHelper.getUserRoles(context.secretRow?.siteId || 0, userRow.id);
+    const rolesRows = await usersHelper.getUserRoles(context.secretRow?.siteId, userRow.id);
     if (rolesRows) {
       userRow.roles = rolesRows.roles || [];
       userRow.permissions = rolesRows.permissions || [];
     }
     return userRow;
   } catch (error) {
-    logCast.writeError(__filename + ':' + error.toString());
+    logInterface.writeError(__filename + ':' + error.toString());
     return false;
   }
 }
 
-async function hasPermission(...args) {
-  // 获取上下文
-  const statusSrgs = status.getContext(args);
-  const context = statusSrgs.context;
-  const [token = null, role = null, permission = null] = statusSrgs.params;
+async function hasPermission(token = null, role = null, permission = null, context) { // hasPermission(...args) {
+  // // 获取上下文
+  // const statusSrgs = status.getContext(args);
+  // const context = statusSrgs.context;
+  // const [token = null, role = null, permission = null] = statusSrgs.params;
   if (!token) {
     return status.error('token Not Empty');
   }
@@ -72,7 +72,7 @@ async function hasPermission(...args) {
     if (!userRow.status) {
       return status.error('Token User Status Error');
     }
-    const rolesRows = await usersHelper.getUserRoles(context.secretRow?.siteId || 0, userRow.id);
+    const rolesRows = await usersHelper.getUserRoles(context.secretRow?.siteId, userRow.id);
     if (rolesRows) {
       if (!(rolesRows.roles || []).includes(role)) {
         return status.error('Role Not User');
@@ -85,11 +85,9 @@ async function hasPermission(...args) {
       return status.error('Roles Error');
     }
   } catch (error) {
-    logCast.writeError(__filename + ':' + error.toString());
+    logInterface.writeError(__filename + ':' + error.toString());
     return false;
   }
-
-
 }
 
 module.exports = {

@@ -37,12 +37,12 @@ class RedisManager {
         client.on('error', (error) => {
           console.error('Redis client error:', error);
           this.destroy(); // 关闭客户端并重新抛出错误，以便于调用者可以处理
-          throw error;
+          throw __filename + ':' + error.toString();
         });
         await client.connect();
         this._client = client;
       } catch (error) {
-        throw error;
+        throw __filename + ':' + error.toString();
       }
     }
     return this._client;
@@ -54,7 +54,7 @@ class RedisManager {
       await client.rPush('testQueue', message);
     } catch (error) {
       console.error('Error sending message:', error);
-      throw error; // 上层调用者可以决定是否进行重试或其他处理
+      throw __filename + ':' + error.toString(); // 上层调用者可以决定是否进行重试或其他处理
     }
   }
 
@@ -82,7 +82,7 @@ class RedisManager {
         await this._client.quit();
       }
     } catch (error) {
-      throw error;
+      throw __filename + ':' + error.toString();
     } finally {
       this._client = null;
     }

@@ -2,8 +2,8 @@
  * @Author: trexwb
  * @Date: 2024-03-13 12:12:05
  * @LastEditors: trexwb
- * @LastEditTime: 2024-05-29 10:38:33
- * @FilePath: /laboratory/microservice/account/src/app/cast/log.js
+ * @LastEditTime: 2024-08-19 09:26:01
+ * @FilePath: /drive/Users/wbtrex/website/localServer/node/damei/laboratory/microservice/account/src/app/cast/log.js
  * @Description: 
  * @一花一世界，一叶一如来
  * @Copyright (c) 2024 by 杭州大美, All Rights Reserved. 
@@ -32,7 +32,7 @@ class LogService {
     return this.sls;
   }
 
-  async putLogs(logType, msg, data, ip) {
+  putLogs(logType, msg, data, ip) {
     try {
       if (!process.env.ALY_ACCESS_KEY_ID || process.env.ALY_ACCESS_KEY_ID == '') {
         return;
@@ -49,7 +49,13 @@ class LogService {
           source: ip || '127.0.0.1'
         }
       };
-      await this.connection().putLogs(param);
+      this.connection().putLogs(param, function (err, data) {
+        if (err) {
+          console.error('error:', err)
+        } else {
+          console.log('写入日志成功', data)
+        }
+      });
     } catch (error) {
       console.error(`error:`, error);
       // Here can be added error retry logic or error reporting

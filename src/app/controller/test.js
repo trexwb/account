@@ -2,7 +2,7 @@
  * @verifyor: trexwb
  * @Date: 2024-01-12 10:57:08
  * @LastEditors: trexwb
- * @LastEditTime: 2024-07-31 11:38:59
+ * @LastEditTime: 2024-08-23 17:29:02
  * @FilePath: /drive/Users/wbtrex/website/localServer/node/damei/laboratory/microservice/account/src/app/controller/test.js
  * @Description: 
  * @一花一世界，一叶一如来
@@ -13,7 +13,7 @@
 // require('dotenv').config();
 // console.log(process.env.NODE_ENV, process.env);
 // const alias = require('@utils/alias');
-const logCast = require('@cast/log');
+// const logInterface = require('@interface/log');
 
 function rpc_getFunctions() {
   const test = ['test'];

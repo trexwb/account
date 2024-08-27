@@ -2,7 +2,7 @@
  * @Author: trexwb
  * @Date: 2024-01-12 10:57:08
  * @LastEditors: trexwb
- * @LastEditTime: 2024-07-31 10:34:04
+ * @LastEditTime: 2024-08-21 14:56:32
  * @FilePath: /drive/Users/wbtrex/website/localServer/node/damei/laboratory/microservice/account/src/app/middleware/verify.js
  * @Description: 
  * @一花一世界，一叶一如来
@@ -34,7 +34,7 @@ const sanitizeInput = async (name, args, context, next) => {
       // 如果数据是字符串，则应用过滤器
       const xss = require('xss');
       data = xss(data); // XSS 过滤
-      data = data.replace(/(^\s*)|(\s*$)/g, "").replace(/'/g, "''"); // SQL 转义单引号
+      data = data.trim().replace(/(^\s*)|(\s*$)/g, "").replace(/'/g, "''"); // SQL 转义单引号
       // data = path.normalize(data); // 路径规范化
       // data = replaceSensitiveInfo(data); // 敏感信息替换
     }
@@ -66,12 +66,15 @@ const token = async (name, args, context, next) => {
   const appSecret = headers['app-secret'] || false;
   const siteId = headers['site-id'] || false;
   const timeStamp = (appSecret || '').toString().substring(32) || 0;
-  if (!appId || timeStamp < Math.floor(Date.now() / 1000) - (process.env.TOKEN_TIME || 1800)) {
-    return status.error('AppId Not Empty');
+  if (!appId || !appSecret) {
+    return status.error('AppId/AppSecret Not Empty');
+  }
+  if (timeStamp < Math.floor(Date.now() / 1000) - (process.env.TOKEN_TIME || 1800)) {
+    return status.error('AppId Time Out');
   }
   const secretRow = await secretsHelper.getAppId(appId);
   if (!secretRow?.app_id || !secretRow?.app_secret) {
-    return status.error('AppSecret Error');
+    return status.error('AppId Error');
   }
   if (!secretRow?.status) {
     return status.error('AppId Status Error');
@@ -105,10 +108,10 @@ const sign = async (name, args, context, next) => {
         ...secretRow
       }
     }
-    const key = context.secretRow.app_secret || '';
+    const key = context.secretRow?.app_secret;
     const { iv, encryptedData } = args;
     const cryptTool = require('@utils/cryptTool');
-    const decryptedData = cryptTool.decrypt(encryptedData, key, iv || '');
+    const decryptedData = cryptTool.decrypt(encryptedData, key, iv);
     args = JSON.parse(JSON.stringify(decryptedData)) //Object.assign({}, decryptedData); // {...decryptedData}
   }
   const result = await next(name, args, context);
